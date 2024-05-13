@@ -1,7 +1,7 @@
 'use server'
 
 import {db} from "@/lib/database";
-import {counters} from "@/lib/database/schema";
+import {counterLayouts, counters} from "@/lib/database/schema";
 import {eq, sql} from "drizzle-orm";
 import {revalidateTag} from "next/cache";
 import {draftMode} from "next/headers";
@@ -36,12 +36,33 @@ export async function toggleDraftmode() {
         draftMode().disable()
 }
 
-export async function publishChanges(domain: string) {
-    await db
+export async function publishChanges() {
+    const result = await db
         .update(counters)
         .set({
             changed: false,
         })
-        .where(eq(counters.changed, true));
-    revalidateTag("page-" + domain);
+        .where(eq(counters.changed, true)).returning({updatedCounterId: counters.id});
+
+    result.map((singleResult) => {
+        revalidateTag("draft-counter-" + singleResult.updatedCounterId);
+    })
+}
+
+export async function setNewCounterLayout(
+    layoutId: string,
+    position: {
+        x?: number,
+        y?: number,
+        h?: number,
+        w?: number
+    },
+) {
+    const result = await db
+        .update(counterLayouts)
+        .set(position)
+        .where(eq(counterLayouts.id, layoutId)).returning({counterId: counterLayouts.forCounter});
+
+    const counterId = result[0].counterId;
+    revalidateTag(`draft-counter-layout-${counterId}`)
 }

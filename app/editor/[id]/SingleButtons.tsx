@@ -3,9 +3,9 @@
 import {Button} from "@/components/ui/button";
 import {publishChanges, toggleDraftmode} from "@/app/editor/[id]/actions";
 
-export default function SingleButtons({domain}: { domain: string }) {
+export default function SingleButtons() {
     return <>
-        <Button onClick={() => publishChanges(domain)}>Publish all changes</Button>
+        <Button onClick={() => publishChanges()}>Publish all changes</Button>
         <Button onClick={() => toggleDraftmode()}>Toggle Draftmode</Button>
     </>
 }

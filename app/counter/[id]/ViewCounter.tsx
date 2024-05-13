@@ -1,7 +1,8 @@
 import {draftMode} from "next/headers";
-import {notFound} from "next/navigation";
-import {getPage} from "@/app/fetcher";
+import Section from "@/app/counter/[id]/Section";
 import Grid from "@/app/editor/[id]/Grid";
+import {notFound} from "next/navigation";
+import {getCounter, getCounterLayout, getPage} from "@/app/fetcher";
 
 type ViewCounterProps = {
     domain: string;
@@ -9,24 +10,30 @@ type ViewCounterProps = {
 
 export default async function ViewCounter({domain}: ViewCounterProps) {
     const {isEnabled} = draftMode()
-    const page = await getPage(domain, isEnabled);
+    const page = await getPage(domain);
 
     if (!page)
         return notFound();
 
-    const myCounters = page.counters;
+    const items = await Promise.all(page.counters.map(async (counter) => {
+        const itemPromise = getCounter(counter.id);
+        const itemLayoutPromise = getCounterLayout(counter.id);
+
+        const [item, itemLayout] = await Promise.all([itemPromise, itemLayoutPromise]);
+
+        return {
+            item,
+            itemLayout,
+        }
+    }));
 
     return (
         <>
             <h1>StaticPage</h1>
-            <Grid items={myCounters}/>
+            <div className={"relative"}>
+                {isEnabled && <Grid items={items}/>}
+                <Section items={items}/>
+            </div>
         </>
     )
-}
-
-async function Counter({count, id}: any) {
-    return <>
-        <p>id: {id}</p>
-        <p>count: {count}</p>
-    </>
 }

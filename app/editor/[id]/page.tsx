@@ -12,7 +12,7 @@ type EditorPageProps = {
 
 export default async function CounterPage({params: {id}}: EditorPageProps) {
     const {isEnabled} = draftMode();
-    const settings = await getSettings(id, isEnabled);
+    const settings = await getSettings(id);
 
     return (
         <>
@@ -20,7 +20,7 @@ export default async function CounterPage({params: {id}}: EditorPageProps) {
             <p>Draftmode: {isEnabled ? "yes" : "no"}</p>
             <i>&quot;Settings&quot;</i>
             {settings.map(async (relation) => {
-                const counter = await getCounter(relation.allCounter.id, isEnabled);
+                const counter = await getCounter(relation.allCounter.id);
                 if (!counter)
                     return null;
 
@@ -32,7 +32,7 @@ export default async function CounterPage({params: {id}}: EditorPageProps) {
                 </>
             })}
             <br/>
-            <SingleButtons domain={id}/>
+            <SingleButtons/>
             <ViewCounter domain={id}/>
         </>
     )

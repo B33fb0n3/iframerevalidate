@@ -3,12 +3,22 @@
 import React, {useMemo, useState} from "react";
 import {cols, gridRowHeight} from "@/lib/constants";
 import ReactGridLayout from 'react-grid-layout';
+import 'react-grid-layout/css/styles.css'
+import {setNewCounterLayout} from "@/app/editor/[id]/actions";
+import {getCounter, getCounterLayout} from "@/app/fetcher";
 
 type GridProps = {
     items: {
-        id: string,
-        count: number
+        item: Awaited<ReturnType<typeof getCounter>>
+        itemLayout: Awaited<ReturnType<typeof getCounterLayout>>
     }[]
+}
+
+type UpdatedPositions = {
+    x?: number;
+    y?: number;
+    w?: number;
+    h?: number;
 }
 
 export default function Grid({items}: GridProps) {
@@ -38,19 +48,43 @@ export default function Grid({items}: GridProps) {
         background: gridVisible ? background : '',
     }), [gridWidth, gridVisible, background]);
 
-    const children = useMemo(() => items.map((counter, index) => {
-        return <p key={counter.id} data-grid={{
-            x: index * 3,
-            y: 0,
-            w: 3,
-            h: 2,
+    const children = useMemo(() => items.map(({item, itemLayout}) => {
+        if (!itemLayout) return null;
+
+        return <div key={itemLayout.id} data-grid={{
+            i: itemLayout.id,
+            x: itemLayout.x,
+            y: itemLayout.y,
+            w: itemLayout.w,
+            h: itemLayout.h,
             maxW: cols,
             isResizable: true,
             isDraggable: true
-        }} className={"border border-solid border-black"}>{counter.id}, {counter.count}</p>
-    }), [gridVisible]);
+        }} className={"border-black border border-solid"}/>
+    }), [items, gridVisible]);
 
-    return <div className="block-grid relative">
+    const identifyChangedValues = (oldItem: ReactGridLayout.Layout, newItem: ReactGridLayout.Layout) => {
+        const updatedPositions: UpdatedPositions = {};
+
+        if (oldItem.x !== newItem.x) updatedPositions["x"] = newItem.x;
+        if (oldItem.y !== newItem.y) updatedPositions["y"] = newItem.y;
+        if (oldItem.w !== newItem.w) updatedPositions["w"] = newItem.w;
+        if (oldItem.h !== newItem.h) updatedPositions["h"] = newItem.h;
+
+        return updatedPositions;
+    };
+
+    const setNewPositionAndSize = async (layoutId: string, updatedPositions: UpdatedPositions) => {
+        if (Object.keys(updatedPositions).length <= 0)
+            return;
+
+        await setNewCounterLayout(
+            layoutId,
+            updatedPositions,
+        )
+    }
+
+    return <div className="block-grid absolute h-full w-full">
         <ReactGridLayout
             className="z-10 relative"
             cols={cols}
@@ -70,7 +104,7 @@ export default function Grid({items}: GridProps) {
             }}
             onResizeStart={() => setGridVisible(true)}
             onResizeStop={(layout, oldItem, newItem) => {
-                // setNewPositionAndSize(newItem)
+                setNewPositionAndSize(newItem.i, identifyChangedValues(oldItem, newItem))
                 setGridVisible(false)
             }}
             onDragStart={(layout, oldItem, newItem) => {
@@ -78,7 +112,7 @@ export default function Grid({items}: GridProps) {
                 setGridVisible(true)
             }}
             onDragStop={(layout, oldItem, newItem) => {
-                // setNewPositionAndSize(newItem)
+                setNewPositionAndSize(newItem.i, identifyChangedValues(oldItem, newItem))
                 setGridVisible(false);
             }}
         >

@@ -1,11 +1,12 @@
 import {getDbConnectionString} from "@/lib/database";
-import type {Config} from "drizzle-kit";
 
-export default {
-    schema: "./lib/database/schema.ts",
-    driver: "pg",
+import {defineConfig} from "drizzle-kit"
+
+export default defineConfig({
+    dialect: "postgresql",
     dbCredentials: {
-        connectionString: getDbConnectionString()
+        url: getDbConnectionString()
     },
+    schema: "./lib/database/schema.ts",
     out: "./drizzle",
-} satisfies Config
+})

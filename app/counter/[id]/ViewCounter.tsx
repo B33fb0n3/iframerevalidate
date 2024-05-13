@@ -31,7 +31,7 @@ export default async function ViewCounter({domain}: ViewCounterProps) {
         <>
             <h1>StaticPage</h1>
             <div className={"relative"}>
-                {isEnabled && <Grid items={items}/>}
+                {isEnabled && <Grid pageId={page.id} items={items}/>}
                 <Section items={items}/>
             </div>
         </>

@@ -4,24 +4,19 @@ import React, {useMemo, useState} from "react";
 import {cols, gridRowHeight} from "@/lib/constants";
 import ReactGridLayout from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css'
-import {setNewCounterLayout} from "@/app/editor/[id]/actions";
+import {createNewCounter, setNewCounterLayout} from "@/app/editor/[id]/actions";
 import {getCounter, getCounterLayout} from "@/app/fetcher";
+import {CounterPosition} from "@/app/editor/[id]/types";
 
 type GridProps = {
+    pageId: string,
     items: {
         item: Awaited<ReturnType<typeof getCounter>>
         itemLayout: Awaited<ReturnType<typeof getCounterLayout>>
     }[]
 }
 
-type UpdatedPositions = {
-    x?: number;
-    y?: number;
-    w?: number;
-    h?: number;
-}
-
-export default function Grid({items}: GridProps) {
+export default function Grid({pageId, items}: GridProps) {
     const [gridVisible, setGridVisible] = useState(false);
 
     const margin: [number, number] = [6, 6];
@@ -64,7 +59,7 @@ export default function Grid({items}: GridProps) {
     }), [items, gridVisible]);
 
     const identifyChangedValues = (oldItem: ReactGridLayout.Layout, newItem: ReactGridLayout.Layout) => {
-        const updatedPositions: UpdatedPositions = {};
+        const updatedPositions: CounterPosition = {};
 
         if (oldItem.x !== newItem.x) updatedPositions["x"] = newItem.x;
         if (oldItem.y !== newItem.y) updatedPositions["y"] = newItem.y;
@@ -74,7 +69,7 @@ export default function Grid({items}: GridProps) {
         return updatedPositions;
     };
 
-    const setNewPositionAndSize = async (layoutId: string, updatedPositions: UpdatedPositions) => {
+    const setNewPositionAndSize = async (layoutId: string, updatedPositions: CounterPosition) => {
         if (Object.keys(updatedPositions).length <= 0)
             return;
 
@@ -82,6 +77,20 @@ export default function Grid({items}: GridProps) {
             layoutId,
             updatedPositions,
         )
+    }
+
+    const handleDropEvent = async (
+        layout: ReactGridLayout.Layout[],
+        item: ReactGridLayout.Layout,
+        e: DragEvent
+    ) => {
+        await createNewCounter(pageId, {
+            x: item.x,
+            y: item.y,
+            w: item.w,
+            h: item.h,
+        });
+        setGridVisible(false)
     }
 
     return <div className="block-grid absolute h-full w-full">
@@ -97,10 +106,11 @@ export default function Grid({items}: GridProps) {
             preventCollision={true}
             containerPadding={[0, 0]}
             style={style}
+            onDrop={handleDropEvent}
             isDroppable
             onDropDragOver={(e) => {
                 // todo: get from e the data and rezie the virtuell element
-                return {w: 1, h: 1}
+                return {w: 5, h: 3}
             }}
             onResizeStart={() => setGridVisible(true)}
             onResizeStop={(layout, oldItem, newItem) => {

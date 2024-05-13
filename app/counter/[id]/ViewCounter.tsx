@@ -1,6 +1,7 @@
 import {draftMode} from "next/headers";
 import {notFound} from "next/navigation";
-import {getCounter, getPage} from "@/app/fetcher";
+import {getPage} from "@/app/fetcher";
+import Grid from "@/app/editor/[id]/Grid";
 
 type ViewCounterProps = {
     domain: string;
@@ -18,14 +19,7 @@ export default async function ViewCounter({domain}: ViewCounterProps) {
     return (
         <>
             <h1>StaticPage</h1>
-            {/*<Grid items={myCounters}/>*/}
-            {myCounters.map(async (counter) => {
-                const {isEnabled} = draftMode()
-                if (isEnabled)
-                    counter = await getCounter(counter.id, isEnabled) as any
-
-                return <Counter key={counter.id} count={counter.count} id={counter.id}/>
-            })}
+            <Grid items={myCounters}/>
         </>
     )
 }

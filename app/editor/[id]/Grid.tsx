@@ -1,3 +1,5 @@
+'use client'
+
 import React, {useMemo, useState} from "react";
 import {cols, gridRowHeight} from "@/lib/constants";
 import ReactGridLayout from 'react-grid-layout';
@@ -33,11 +35,19 @@ export default function Grid({items}: GridProps) {
     }), [cellSize, gridWidth, margin, cols]);
 
     const style = useMemo(() => ({
-        width: gridWidth, background: gridVisible ? background : '',
-    }), [gridWidth, gridVisible, background],);
+        background: gridVisible ? background : '',
+    }), [gridWidth, gridVisible, background]);
 
-    const children = useMemo(() => items.map((counter) => {
-        return <p key={counter.id}>{counter.id}, {counter.count}</p>
+    const children = useMemo(() => items.map((counter, index) => {
+        return <p key={counter.id} data-grid={{
+            x: index * 3,
+            y: 0,
+            w: 3,
+            h: 2,
+            maxW: cols,
+            isResizable: true,
+            isDraggable: true
+        }} className={"border border-solid border-black"}>{counter.id}, {counter.count}</p>
     }), [gridVisible]);
 
     return <div className="block-grid relative">
@@ -102,7 +112,7 @@ function generateGridBackground({cellSize, margin, cols, gridWidth}: GenerateGri
         const isFirstOrSecondColumn = index % cols < 4;
         const isBeforeLastOrLastColumn = index % cols >= cols - 4;
 
-        const opacity = isFirstOrSecondColumn || isBeforeLastOrLastColumn ? 0 : 0.1;
+        const opacity = isFirstOrSecondColumn || isBeforeLastOrLastColumn ? 0.05 : 0.1;
 
         return `<rect stroke='white' stroke-width='1' fill='black' x='${x}' y='${y}' width='${w}' height='${h}' rx="5" opacity="${opacity}"/>`;
     });

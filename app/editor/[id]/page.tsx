@@ -1,7 +1,8 @@
-import Buttons from "@/app/editor/[id]/Buttons";
+import CounterButtons from "@/app/editor/[id]/CounterButtons";
 import {draftMode} from "next/headers";
 import ViewCounter from "@/app/counter/[id]/ViewCounter";
-import {getCounterDraft} from "@/app/fetcher";
+import {getCounter, getSettings} from "@/app/fetcher";
+import SingleButtons from "@/app/editor/[id]/SingleButtons";
 
 type EditorPageProps = {
     params: {
@@ -10,18 +11,29 @@ type EditorPageProps = {
 }
 
 export default async function CounterPage({params: {id}}: EditorPageProps) {
-    console.log("---View Editor Page---")
-    const counter = await getCounterDraft(id);
-    const {isEnabled} = draftMode()
+    const {isEnabled} = draftMode();
+    const settings = await getSettings(id, isEnabled);
 
     return (
         <>
             <h1>Dynamic Page</h1>
             <p>Draftmode: {isEnabled ? "yes" : "no"}</p>
-            <p>Count: {counter?.count}</p>
-            <p>Is different from prod: {counter?.changed ? "yes" : "no"}</p>
-            <Buttons counterId={id}/>
-            <ViewCounter counterId={id} />
+            <i>&quot;Settings&quot;</i>
+            {settings.map(async (relation) => {
+                const counter = await getCounter(relation.allCounter.id, isEnabled);
+                if (!counter)
+                    return null;
+
+                return <>
+                    <p>id: {counter.id}</p>
+                    <p>count: {counter.count}</p>
+                    <p>changed: {counter.changed ? "ja" : "nein"}</p>
+                    <CounterButtons counterId={counter.id}/>
+                </>
+            })}
+            <br/>
+            <SingleButtons domain={id}/>
+            <ViewCounter domain={id}/>
         </>
     )
 }

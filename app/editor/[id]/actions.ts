@@ -3,7 +3,7 @@
 import {db} from "@/lib/database";
 import {counters} from "@/lib/database/schema";
 import {eq, sql} from "drizzle-orm";
-import {revalidatePath, revalidateTag} from "next/cache";
+import {revalidateTag} from "next/cache";
 import {draftMode} from "next/headers";
 
 export async function increaseCounter(counterId: string) {
@@ -36,13 +36,12 @@ export async function toggleDraftmode() {
         draftMode().disable()
 }
 
-export async function publishCounter(counterId: string) {
-    revalidateTag("draft-counter-" + counterId);
-    revalidateTag("counter-" + counterId);
+export async function publishChanges(domain: string) {
     await db
         .update(counters)
         .set({
             changed: false,
         })
-        .where(eq(counters.id, counterId));
+        .where(eq(counters.changed, true));
+    revalidateTag("page-" + domain);
 }

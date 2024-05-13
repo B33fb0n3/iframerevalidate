@@ -1,34 +1,71 @@
 import {unstable_cache} from "next/cache";
 import {db} from "@/lib/database";
-import {eq} from "drizzle-orm";
-import {counters} from "@/lib/database/schema";
+import {desc, eq} from "drizzle-orm";
+import {counterPages, counters} from "@/lib/database/schema";
+import {cache} from 'react';
 
-export const getCounter = async (counterId: string, direct: boolean = true) => {
+const fetchCounter = async (counterId: string) => {
+    console.log("getCounter", new Date())
+
     return db.query.counters.findFirst({
         where: eq(counters.id, counterId),
         columns: {
+            id: true,
             count: true,
             changed: true,
         }
     })
 }
 
-export const getCounterDraft = async (counterId: string) => {
+export const getCounter = cache(async (counterId: string, draft: boolean) => {
+    const tag = !draft ? `counter-${counterId}` : `draft-counter-${counterId}`
+
     return unstable_cache(
         async () => {
-            return getCounter(counterId, false);
+            return fetchCounter(counterId);
         },
-        [`draft-counter-${counterId}`],
-        {tags: [`draft-counter-${counterId}`]}
+        [tag],
+        {tags: [tag]}
+    )();
+});
+
+export const getPage = async (domain: string, draft: boolean) => {
+    const tag = !draft ? `page-${domain}` : `draft-page-${domain}`
+
+    return unstable_cache(
+        async () => {
+            console.log("getPage", new Date())
+            return db.query.counterPages.findFirst({
+                columns: {},
+                where: eq(counterPages.domain, domain),
+                with: {
+                    counters: {
+                        columns: {
+                            id: true,
+                            count: true,
+                        },
+                        orderBy: [desc(counters.id)]
+                    },
+                }
+            });
+        },
+        [tag],
+        {tags: [tag]}
     )();
 }
 
-export const getCounterProd = async (counterId: string) => {
+export const getSettings = async (domain: string, draft: boolean) => {
+    const tag = !draft ? `settings-${domain}` : `draft-settings-${domain}`
+
     return unstable_cache(
         async () => {
-            return getCounter(counterId, false);
+            console.log("getSettings", new Date())
+            return db.select({allCounter: {id: counters.id}}).from(counters)
+                .innerJoin(counterPages, eq(counterPages.id, counters.counterPageId))
+                .orderBy(desc(counters.id))
+                .where(eq(counterPages.domain, domain))
         },
-        [`counter-${counterId}`],
-        {tags: [`counter-${counterId}`]}
+        [tag],
+        {tags: [tag]}
     )();
 }

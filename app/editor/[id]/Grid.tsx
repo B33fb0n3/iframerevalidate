@@ -4,9 +4,11 @@ import React, {useMemo, useState} from "react";
 import {cols, gridRowHeight} from "@/lib/constants";
 import ReactGridLayout from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css'
-import {createNewCounter, setNewCounterLayout} from "@/app/editor/[id]/actions";
+import {createNewCounter, highlightCounter, setNewCounterLayout} from "@/app/editor/[id]/actions";
 import {getCounter, getCounterLayout} from "@/app/fetcher";
 import {CounterPosition} from "@/app/editor/[id]/types";
+import {useQueryState} from "nuqs";
+import {Button} from "@/components/ui/button";
 
 type GridProps = {
     pageId: string,
@@ -18,6 +20,7 @@ type GridProps = {
 
 export default function Grid({pageId, items}: GridProps) {
     const [gridVisible, setGridVisible] = useState(false);
+    const [selectedLayoutId, setSelectedLayoutId] = useQueryState('sel-layout')
 
     const margin: [number, number] = [6, 6];
     const gridWidth = vwToPx(100);
@@ -44,7 +47,9 @@ export default function Grid({pageId, items}: GridProps) {
     }), [gridWidth, gridVisible, background]);
 
     const children = useMemo(() => items.map(({item, itemLayout}) => {
-        if (!itemLayout) return null;
+        if (!itemLayout || !item) return null;
+
+        const isSelected = itemLayout.id === selectedLayoutId;
 
         return <div key={itemLayout.id} data-grid={{
             i: itemLayout.id,
@@ -55,7 +60,14 @@ export default function Grid({pageId, items}: GridProps) {
             maxW: cols,
             isResizable: true,
             isDraggable: true
-        }} className={"border-black border border-solid"}/>
+        }} className={"border-black border border-solid"}
+                    style={{borderColor: isSelected ? "blue" : (item.highlighted ? "yellow" : "unset")}}>
+            {isSelected &&
+                <Button className={"absolute"} onClick={async () => {
+                    await highlightCounter(item.id)
+                }}>highlight</Button>
+            }
+        </div>
     }), [items, gridVisible]);
 
     const identifyChangedValues = (oldItem: ReactGridLayout.Layout, newItem: ReactGridLayout.Layout) => {
@@ -118,7 +130,7 @@ export default function Grid({pageId, items}: GridProps) {
                 setGridVisible(false)
             }}
             onDragStart={(layout, oldItem, newItem) => {
-                // setSelectedBlock(newItem)
+                setSelectedLayoutId(newItem.i)
                 setGridVisible(true)
             }}
             onDragStop={(layout, oldItem, newItem) => {

@@ -86,3 +86,11 @@ export async function createNewCounter(pageId: string, position: CounterPosition
     revalidateTag(`draft-counter-${newCounterId}`)
     revalidateTag(`draft-counter-layout-${newCounterId}`)
 }
+
+export async function highlightCounter(counterId: string) {
+    await db.update(counters).set({
+        highlighted: true,
+    }).where(eq(counters.id, counterId));
+
+    revalidateTag(`draft-counter-${counterId}`)
+}

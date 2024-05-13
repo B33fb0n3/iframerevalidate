@@ -11,6 +11,7 @@ export const getCounter = memoize(
             id: true,
             count: true,
             changed: true,
+            highlighted: true,
         }
     }),
     {

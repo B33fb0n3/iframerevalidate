@@ -15,6 +15,7 @@ export const counters = pgTable("counter", {
 
     count: integer("count").notNull(),
     changed: boolean("changed").default(false).notNull(),
+    highlighted: boolean("highlighted").default(false).notNull(),
 
     createdAt: timestamp("created_at", {mode: "date"}).notNull().defaultNow(),
 });

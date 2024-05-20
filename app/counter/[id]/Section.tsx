@@ -1,8 +1,6 @@
 import {cols, gridRowHeight} from "@/lib/constants";
 import RenderCounter from "@/app/counter/[id]/RenderCounter";
 import {getCounter, getCounterLayout} from "@/app/fetcher";
-import {getSelectorsByUserAgent} from 'react-device-detect';
-import {headers} from "next/headers";
 
 type SectionProps = {
     items: {
@@ -16,8 +14,8 @@ export default async function Section({items}: SectionProps) {
         return null;
 
     // decide if mobile or desktop
-    const userAgent = headers().get("user-agent");
-    const {isMobile} = getSelectorsByUserAgent(userAgent ?? "")
+    // const userAgent = headers().get("user-agent");
+    // const {isMobile} = getSelectorsByUserAgent(userAgent ?? "")
 
     const calculateGridHeight = () => {
         return items.reduce((maxHeight, item) => {
@@ -36,7 +34,7 @@ export default async function Section({items}: SectionProps) {
         rowGap: `6px`,
         columnGap: `6px`,
     }}>
-        <p>{isMobile ? "mobile" : "desktop"}</p>
+        {/*<p>{isMobile ? "mobile" : "desktop"}</p>*/}
         {items.map(({item, itemLayout}) => {
             if (!item || !itemLayout) return null;
 

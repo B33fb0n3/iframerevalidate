@@ -1,5 +1,4 @@
 import {getDbConnectionString} from "@/lib/database";
-
 import {defineConfig} from "drizzle-kit"
 
 export default defineConfig({
